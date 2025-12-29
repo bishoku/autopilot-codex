@@ -1,0 +1,11 @@
+node_modules
+.dist
+.dist
+build
+dist
+.env
+.env.*
+!.env.example
+pnpm-lock.yaml
+apps/api/prisma/migrations
+apps/api/.prisma

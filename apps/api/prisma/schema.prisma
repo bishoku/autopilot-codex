@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Stage {
+  INTENT
+  REQUIREMENTS
+  ACCEPTANCE_CRITERIA
+  IMPACT_ANALYSIS
+  TASKS
+  EXECUTION
+  SUMMARY
+}
+
+enum RunStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum TaskStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  SKIPPED
+}
+
+enum ImpactLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Session {
+  id            String   @id @default(uuid())
+  name          String?
+  projectPath   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  codexThreadId String?
+  currentStage  Stage?
+
+  intent             Intent?
+  requirements       Requirement[]
+  acceptanceCriteria AcceptanceCriterion[]
+  impactAnalysis     ImpactAnalysis?
+  tasks              Task[]
+  runs               Run[]
+
+  @@index([projectPath])
+}
+
+model Intent {
+  sessionId String  @id
+  text      String
+  updatedAt DateTime @updatedAt
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model Requirement {
+  id           String   @id @default(uuid())
+  sessionId    String
+  reqId        String
+  shortName    String
+  currentState String
+  desiredState String
+  explanation  String
+  order        Int
+  updatedAt    DateTime @updatedAt
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, reqId])
+  @@index([sessionId])
+}
+
+model AcceptanceCriterion {
+  id               String   @id @default(uuid())
+  sessionId        String
+  acId             String
+  requirementReqId String
+  given            String
+  when             String
+  then             String
+  rendered         String
+  order            Int
+  updatedAt        DateTime @updatedAt
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, acId])
+  @@index([sessionId])
+}
+
+model ImpactAnalysis {
+  id              String      @id @default(uuid())
+  sessionId       String      @unique
+  impactId        String
+  impactLevel     ImpactLevel
+  affectedModules Json
+  explanation     String
+  risks           Json?
+  assumptions     Json?
+  updatedAt       DateTime @updatedAt
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id           String     @id @default(uuid())
+  sessionId    String
+  taskId       String
+  shortName    String
+  description  String
+  relatedRequirementIds Json?
+  status       TaskStatus
+  attempts     Int
+  lastError    String?
+  resultSummary String?
+  order        Int
+  updatedAt    DateTime @updatedAt
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, taskId])
+  @@index([sessionId])
+}
+
+model Run {
+  id        String    @id @default(uuid())
+  sessionId String
+  stage     Stage
+  status    RunStatus
+  startedAt DateTime?
+  endedAt   DateTime?
+  error     String?
+  taskId    String?
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  events  RunEvent[]
+
+  @@index([sessionId])
+  @@index([stage])
+}
+
+model RunEvent {
+  id     String   @id @default(uuid())
+  runId  String
+  ts     DateTime
+  type   String
+  payload Json
+
+  run Run @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+}
