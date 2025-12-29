@@ -5,11 +5,13 @@ import {
   generateImpact,
   generateRequirements,
   generateTasks,
+  executeTask,
   getAcceptance,
   getImpact,
   getRequirements,
   getSession,
   getTasks,
+  startExecution,
   setIntent
 } from "../lib/api";
 import { useState } from "react";
@@ -73,6 +75,16 @@ export const SessionWorkspace = () => {
   const acceptanceMutation = generateMutation("acceptance", () => generateAcceptance(sessionId as string));
   const impactMutation = generateMutation("impact", () => generateImpact(sessionId as string));
   const tasksMutation = generateMutation("tasks", () => generateTasks(sessionId as string));
+
+  const startExecutionMutation = useMutation({
+    mutationFn: (selectedTaskIds?: string[]) => startExecution(sessionId as string, selectedTaskIds),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks", sessionId] })
+  });
+
+  const executeTaskMutation = useMutation({
+    mutationFn: (taskId: string) => executeTask(sessionId as string, taskId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks", sessionId] })
+  });
 
   if (!sessionId) {
     return <div className="text-sm text-slate-500">Session not found.</div>;
@@ -156,27 +168,62 @@ export const SessionWorkspace = () => {
       </StageCard>
 
       <StageCard title="Task List">
-        <button
-          className="rounded-2xl border border-yk-blue px-4 py-2 text-sm font-semibold text-yk-blue"
-          onClick={() => tasksMutation.mutate()}
-        >
-          Generate Tasks
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            className="rounded-2xl border border-yk-blue px-4 py-2 text-sm font-semibold text-yk-blue"
+            onClick={() => tasksMutation.mutate()}
+          >
+            Generate Tasks
+          </button>
+          <button
+            className="rounded-2xl bg-yk-red px-4 py-2 text-sm font-semibold text-white"
+            onClick={() => startExecutionMutation.mutate()}
+            disabled={!tasksQuery.data?.length}
+          >
+            Execute All Tasks
+          </button>
+        </div>
         <div className="space-y-3">
           {tasksQuery.data?.map((task: any) => (
             <div key={task.taskId} className="rounded-2xl border border-yk-border p-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-xs uppercase text-slate-400">{task.taskId}</div>
                   <h4 className="font-semibold text-slate-800">{task.shortName}</h4>
                 </div>
-                <span className="rounded-full bg-yk-blue/10 px-3 py-1 text-xs text-yk-blue">
-                  {task.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-yk-blue/10 px-3 py-1 text-xs text-yk-blue">
+                    {task.status}
+                  </span>
+                  <button
+                    className="rounded-xl border border-yk-blue px-3 py-1 text-xs font-semibold text-yk-blue"
+                    onClick={() => executeTaskMutation.mutate(task.taskId)}
+                    disabled={task.status === "RUNNING"}
+                  >
+                    Execute
+                  </button>
+                </div>
               </div>
               <p className="mt-2 text-sm text-slate-500">{task.description}</p>
+              {task.resultSummary && (
+                <div className="mt-3 rounded-2xl border border-yk-border bg-white/60 p-3">
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Result Summary</div>
+                  <p className="mt-2 text-xs text-slate-600">{task.resultSummary}</p>
+                </div>
+              )}
+              {task.lastError && (
+                <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3">
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-red-500">Last Error</div>
+                  <p className="mt-2 text-xs text-red-600">{task.lastError}</p>
+                </div>
+              )}
             </div>
           ))}
+          {!tasksQuery.data?.length && (
+            <div className="rounded-2xl border border-dashed border-yk-border p-4 text-sm text-slate-500">
+              Generate tasks to unlock execution.
+            </div>
+          )}
         </div>
       </StageCard>
     </div>

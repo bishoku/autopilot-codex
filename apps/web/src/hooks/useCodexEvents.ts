@@ -18,7 +18,7 @@ export const useCodexEvents = (sessionId?: string) => {
   const [events, setEvents] = useState<CodexEvent[]>([]);
   const [status, setStatus] = useState("disconnected");
 
-  const socket = useMemo<Socket>(() => io(WS_URL, { transports: ["websocket"] }), []);
+  const socket = useMemo<Socket>(() => io(WS_URL), []);
 
   useEffect(() => {
     const onConnect = () => setStatus("connected");

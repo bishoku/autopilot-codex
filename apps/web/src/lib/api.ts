@@ -73,3 +73,14 @@ export const getRequirements = (id: string) => apiFetch<any[]>(`/sessions/${id}/
 export const getAcceptance = (id: string) => apiFetch<any[]>(`/sessions/${id}/acceptance-criteria`);
 export const getImpact = (id: string) => apiFetchOptional<any>(`/sessions/${id}/impact-analysis`);
 export const getTasks = (id: string) => apiFetch<any[]>(`/sessions/${id}/tasks`);
+
+export const startExecution = (id: string, selectedTaskIds?: string[]) =>
+  apiFetch<{ executionId: string }>(`/sessions/${id}/execution/start`, {
+    method: "POST",
+    body: JSON.stringify({ selectedTaskIds })
+  });
+
+export const executeTask = (id: string, taskId: string) =>
+  apiFetch<{ runId: string }>(`/sessions/${id}/tasks/${taskId}/execute`, {
+    method: "POST"
+  });
