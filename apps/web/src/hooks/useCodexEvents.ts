@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { io, Socket } from "socket.io-client";
 
-const WS_URL = import.meta.env.VITE_WS_URL ?? "http://localhost:3001";
+const API_URL = import.meta.env.VITE_API_URL as string | undefined;
+const DEFAULT_WS_URL = API_URL ? API_URL.replace(/\/api\/?$/, "") : "http://localhost:3001";
+const WS_URL = import.meta.env.VITE_WS_URL ?? DEFAULT_WS_URL;
 
 export type CodexEvent = {
   sessionId: string;
@@ -18,7 +20,13 @@ export const useCodexEvents = (sessionId?: string) => {
   const [events, setEvents] = useState<CodexEvent[]>([]);
   const [status, setStatus] = useState("disconnected");
 
-  const socket = useMemo<Socket>(() => io(WS_URL), []);
+  const socket = useMemo<Socket>(
+    () =>
+      io(WS_URL, {
+        path: "/socket.io"
+      }),
+    []
+  );
 
   useEffect(() => {
     const onConnect = () => setStatus("connected");
@@ -26,6 +34,7 @@ export const useCodexEvents = (sessionId?: string) => {
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
+    setStatus(socket.connected ? "connected" : "disconnected");
 
     socket.on("codex.event", (payload: CodexEvent) => {
       setEvents((prev) => [payload, ...prev].slice(0, 500));

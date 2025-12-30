@@ -139,12 +139,14 @@ export class StageRunner {
 
         const output = inferOutput(event.raw);
         if (output) {
-          try {
-            finalOutput = JSON.parse(output.text as string) as Record<string, unknown>;
-          } catch(error) {
-            console.info("Failed to parse Codex output as JSON", error.message);
+          const outputText = typeof output.text === "string" ? output.text.trim() : "";
+          if (outputText) {
+            try {
+              finalOutput = JSON.parse(outputText) as Record<string, unknown>;
+            } catch (error) {
+              console.info("Failed to parse Codex output as JSON", error.message);
+            }
           }
-          
         }
       }
 
@@ -218,7 +220,14 @@ export class StageRunner {
 
         const output = inferOutput(event.raw);
         if (output) {
-          finalOutput = output;
+          const outputText = typeof output.text === "string" ? output.text.trim() : "";
+          if (outputText) {
+            try {
+              finalOutput = JSON.parse(outputText) as Record<string, unknown>;
+            } catch (error) {
+              console.info("Failed to parse Codex output as JSON", error.message);
+            }
+          }
         }
       }
 

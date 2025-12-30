@@ -21,9 +21,9 @@ export class CodexClientFacade implements CodexClient {
     workingDirectory: string;
     fullAuto?: boolean;
   }): AsyncGenerator<CodexEvent, void, void> {
-    if (input.fullAuto) {
+   /* if (input.fullAuto) {
       return this.cliClient.runStreamed(input);
-    }
+    }*/
     return this.sdkClient.runStreamed(input);
   }
 }

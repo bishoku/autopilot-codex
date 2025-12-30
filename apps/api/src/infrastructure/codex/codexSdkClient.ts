@@ -29,11 +29,15 @@ export class CodexSdkClient implements CodexClient {
     const thread = input.threadId
       ? this.codex.resumeThread(input.threadId, {
           workingDirectory: input.workingDirectory,
-          skipGitRepoCheck: true
+          skipGitRepoCheck: true,
+          sandboxMode: "workspace-write",
+          approvalPolicy: "never"
         })
       : this.codex.startThread({
           workingDirectory: input.workingDirectory,
-          skipGitRepoCheck: true
+          skipGitRepoCheck: true,
+          sandboxMode: "workspace-write",
+          approvalPolicy: "never",
         });
     const result = await thread.runStreamed(input.prompt, {
       outputSchema: input.outputSchema

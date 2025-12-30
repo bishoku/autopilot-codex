@@ -1,10 +1,18 @@
 {
   "version": "0.2.0",
+  "inputs": [
+    {
+      "id": "nodeBinary",
+      "type": "promptString",
+      "description": "Path to Node.js binary (e.g. /opt/homebrew/bin/node or /usr/local/bin/node)"
+    }
+  ],
   "configurations": [
     {
       "type": "node",
       "request": "launch",
       "name": "API (tsx)",
+      "runtimeExecutable": "${input:nodeBinary}",
       "runtimeArgs": ["--import", "tsx"],
       "program": "${workspaceFolder}/apps/api/src/main.ts",
       "cwd": "${workspaceFolder}/apps/api",
